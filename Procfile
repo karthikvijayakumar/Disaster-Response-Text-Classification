@@ -1,1 +1,2 @@
-web: bash build_and_deploy.sh
+release: ./release-steps.sh
+web: gunicorn --chdir app run:app
