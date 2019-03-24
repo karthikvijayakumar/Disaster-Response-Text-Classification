@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 
 import nltk
 nltk.download('stopwords')
+nltk.download('punkt')
 
 import re
 import pandas as pd
