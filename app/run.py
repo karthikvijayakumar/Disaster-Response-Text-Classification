@@ -8,11 +8,23 @@ from plotly.graph_objs import Bar
 from sqlalchemy import create_engine
 import pickle
 from utils import tokenize
+import os
 
 app = Flask(__name__)
 
+print('Current working directory')
+print(os.getcwd())
+
+db_path = os.path.abspath('../data/DisasterResponse.db')
+print('Correct db path = ')
+print(db_path)
+
 # load data
-engine = create_engine('sqlite:///../data/DisasterResponse.db')
+engine = create_engine('sqlite:///' + db_path)
+
+print('Tables in DB:')
+print( engine.table_names() )
+
 df = pd.read_sql_table('messages', engine)
 
 # load model
