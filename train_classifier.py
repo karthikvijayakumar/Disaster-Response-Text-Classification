@@ -5,16 +5,14 @@ import nltk
 nltk.download('stopwords')
 
 import re
-import numpy as np
 import pandas as pd
-import seaborn as sns
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
@@ -30,31 +28,6 @@ def load_data(database_filepath):
     Y = df[list( df.columns )[4:]]
     category_names = list( df.columns )[4:]
     return [X,Y,category_names]
-
-# def tokenize(text):
-#     # Note that the tweets are largely one sentence tweets, hence we dont need to split into multiple sentences
-    
-#     #Remove non alpha numeric characters
-#     text = re.sub('[^a-zA-Z0-9]', ' ', text)
-    
-#     # Compress multiple spaces into one
-#     text = re.sub( '[ ]+', ' ',  text )
-    
-#     #Use word tokenizer from NLTK
-#     tokens = word_tokenize(text)
-    
-#     #Remove stop words
-#     english_stop_words = stopwords.words("english")
-#     tokens = filter(lambda x: x not in english_stop_words, tokens)
-    
-#     #Lemmatize using the Wordnet Lemmatizer
-#     lemmatizer =  WordNetLemmatizer()
-    
-#     tokens = [lemmatizer.lemmatize(x) for x in tokens]
-#     tokens = [lemmatizer.lemmatize(x, pos= 'v') for x in tokens]
-    
-#     return tokens
-
 
 def build_model():
     pipeline = Pipeline([
