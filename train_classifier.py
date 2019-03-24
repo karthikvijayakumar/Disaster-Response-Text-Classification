@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 import nltk
 nltk.download('stopwords')
 nltk.download('punkt')
+nltk.download('wordnet')
 
 import re
 import pandas as pd
