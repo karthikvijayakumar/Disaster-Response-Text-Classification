@@ -10,32 +10,11 @@ import pickle
 from utils import tokenize
 import os
 
-def list_files(startpath):
-    for root, dirs, files in os.walk(startpath):
-        level = root.replace(startpath, '').count(os.sep)
-        indent = ' ' * 4 * (level)
-        print('{}{}/'.format(indent, os.path.basename(root)))
-        subindent = ' ' * 4 * (level + 1)
-        for f in files:
-            print('{}{}'.format(subindent, f))
-
-list_files('../data')
-list_files('../models')
-
 app = Flask(__name__)
 
-print('Current working directory')
-print(os.getcwd())
-
-db_path = os.path.abspath('../data/DisasterResponse.db')
-print('Correct db path = ')
-print(db_path)
-
 # load data
+db_path = os.path.abspath('../data/DisasterResponse.db')
 engine = create_engine('sqlite:///' + db_path)
-
-print('Tables in DB:')
-print( engine.table_names() )
 
 df = pd.read_sql_table('messages', engine)
 
@@ -81,7 +60,6 @@ def index():
     # render web page with plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
-
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
@@ -98,7 +76,6 @@ def go():
         query=query,
         classification_result=classification_results
     )
-
 
 def main():
     app.run(host='0.0.0.0', port=3001, debug=True)
