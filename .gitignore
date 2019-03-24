@@ -1,0 +1,7 @@
+#Exclude python cache files
+/*/__pycache__
+
+#Exclude run artifacts
+#These have to generated at build time and cant be prestored
+/data/*.db
+/models/*.pkl
