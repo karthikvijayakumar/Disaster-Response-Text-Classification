@@ -12,6 +12,7 @@ import os
 from collections import Counter
 import itertools
 import random
+import time
 
 app = Flask(__name__)
 
@@ -26,23 +27,35 @@ print('Finished loading from database')
 # extract data needed for visuals    
 
 #Visual 1: Genre counts
+print('Computing data for genre counts visualization')
+start = time.time()
 genre_counts = df.groupby('genre').count()['message']
 genre_names = list(genre_counts.index)
+end = time.time()
+print('Finished computing data for genre counts visualization in ' + str(end-start) + ' seconds')
 
 #Visual 2: Word cloud of top 100 words
-all_messages_cleaned_tokens = df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
-all_messages_combined_words_cleaned = list( itertools.chain.from_iterable(all_messages_cleaned_tokens) )
-word_count_dict = dict( Counter(all_messages_combined_words_cleaned) )
-word_count_df = pd.DataFrame.from_dict(word_count_dict, orient = 'index', columns = ['count'])
-word_count_df['frequency'] = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned ))
-word_count_df = word_count_df.sort_values('frequency', ascending=False)
-word_count_df = word_count_df[:100]
+print('Computing data for word cloud of top 100 words')
+start = time.time()
+all_messages_combined_words_cleaned = list( 
+    itertools.chain.from_iterable(
+        df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
+    )
+)
+word_count_df = pd.DataFrame.from_dict(dict( Counter(all_messages_combined_words_cleaned) ), orient = 'index', columns = ['count'])
+word_count_df = word_count_df.assign( 
+    frequency = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned )) 
+    ).sort_values('frequency', ascending=False)[:100]
 min_freq = word_count_df.frequency.min()
 max_freq = word_count_df.frequency.max()
-word_count_df = word_count_df.assign( score = word_count_df.frequency.apply(
-    lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
-))
+word_count_df = word_count_df.assign( 
+    score = word_count_df.frequency.apply(
+        lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
+    )
+)
 colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(100)]
+end = time.time()
+print('Finished computing data for word cloud of top 100 words in ' + str(end-start) + ' seconds')
 
 # load model
 with open("../models/classifier.pkl", 'rb') as f:
