@@ -25,9 +25,13 @@ The project structure is as follows:
     - messages.csv
         Input messages
     - categories.csv
-        Category labels for the above messages
-    - process_data.py
-        Script to process the above 2 files and write into a SQLite database
+        <br>Category labels for the above messages
+    - DisasterResponse.db
+        SQLite database file. Contains 2 tables:
+        1. messages
+            <br>Messages with their corresponding categories from the above 2 files
+        2. word_count
+            <br>Counts and frequencies of all the words in the repository
     
     <br>There is a note below on why the sqlite database binary has been checked in to the repository
 - models
@@ -76,7 +80,7 @@ You have 2 options:
 
 Heroku has a requirement that the web app needs to spin up and bind to the assigned port within 60 seconds of initiation. In other words the flask app we are using here should be ready to serve requests within 60 seconds.
 
-Reading the CSV files and writing to the SQLite database takes about 10 seconds in the Heroku cloud in the free tier
+Reading the CSV files and writing to the SQLite database takes about 10 + 10 seconds in the Heroku cloud in the free tier. 10 seconds for merging the messages and categories and another 10 seconds for computing the word counts and frequencies.
 
 Training the model and saving the pickle file takes about 50 seconds in the Heroku cloud in the free tier
 

@@ -22,6 +22,7 @@ engine = create_engine('sqlite:///' + db_path)
 
 print('Loading data from database')
 df = pd.read_sql_table('messages', engine)
+word_count_df = pd.read_sql_table('word_count', engine)
 print('Finished loading from database')
 
 # extract data needed for visuals    
@@ -36,16 +37,9 @@ print('Finished computing data for genre counts visualization in ' + str(end-sta
 
 #Visual 2: Word cloud of top 100 words
 print('Computing data for word cloud of top 100 words')
+print('Translating frequencies to scores')
 start = time.time()
-all_messages_combined_words_cleaned = list( 
-    itertools.chain.from_iterable(
-        df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
-    )
-)
-word_count_df = pd.DataFrame.from_dict(dict( Counter(all_messages_combined_words_cleaned) ), orient = 'index', columns = ['count'])
-word_count_df = word_count_df.assign( 
-    frequency = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned )) 
-    ).sort_values('frequency', ascending=False)[:100]
+word_count_df = word_count_df[:100]
 min_freq = word_count_df.frequency.min()
 max_freq = word_count_df.frequency.max()
 word_count_df = word_count_df.assign( 
@@ -104,9 +98,9 @@ def index():
                 Scatter(x=[random.random() for i in range(100)],
                     y=[random.random() for i in range(100)],
                     mode='text',
-                    text=word_count_df.index,
+                    text=word_count_df['word'],
                     marker={'opacity': 0.3},
-                    textfont={'size': word_count_df.score,
+                    textfont={'size': word_count_df['score'],
                             'color': colors})
             ],
             'layout' : {

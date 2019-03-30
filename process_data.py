@@ -1,6 +1,9 @@
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
+from collections import Counter
+import itertools
+from utils import tokenize
 
 def load_data(messages_filepath, categories_filepath):
     """Load messages and categories data from the given file paths, process them and merge them
@@ -37,7 +40,21 @@ def load_data(messages_filepath, categories_filepath):
     # Drop the categories column
 
     df = df.drop('categories', axis = 1)
-    return df
+
+    #Compute the word counts and frequencies for the top 100 words
+    all_messages_combined_words_cleaned = list( 
+        itertools.chain.from_iterable(
+            df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
+        )
+    )
+    word_count_df = pd.DataFrame.from_dict(dict( Counter(all_messages_combined_words_cleaned) ), orient = 'index', columns = ['count'])
+    word_count_df = word_count_df.assign( 
+        frequency = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned )) 
+    )
+    word_count_df = word_count_df.sort_values('frequency', ascending=False).reset_index()
+    word_count_df.rename(index = str, columns = {'index': 'word'}, inplace = True)
+
+    return df, word_count_df
 
 def clean_data(df):
     """Removes duplicates from the dataset
@@ -49,11 +66,12 @@ def clean_data(df):
     """
     return df.drop_duplicates()
 
-def save_data(df, database_filename):
+def save_data(df, table_name, database_filename):
     """Writes the dataframe into a sqlite database at the given location
     
     Args:
-    df: pandas.DataFrame: Input data containing messages and their classifications into multiple categories
+    df: pandas.DataFrame: Input data containing messages and their classifications into multiple categories    
+    table_name: string. Table to write the input data frame to
     database_filename: File location to create and store SQLite database
 
     Returns:
@@ -61,7 +79,7 @@ def save_data(df, database_filename):
     
     """
     engine = create_engine('sqlite:///' + database_filename, echo  = True)
-    df.to_sql('messages', engine, index=False, if_exists='replace', chunksize=100 )
+    df.to_sql(table_name, engine, index=False, if_exists='replace', chunksize=100 )
 
 def main():
     """Main function for the file. This is entry point of execution
@@ -79,13 +97,15 @@ def main():
 
         print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
               .format(messages_filepath, categories_filepath))
-        df = load_data(messages_filepath, categories_filepath)
+        df, word_count_df = load_data(messages_filepath, categories_filepath)
 
         print('Cleaning data...')
         df = clean_data(df)
         
         print('Saving data...\n    DATABASE: {}'.format(database_filepath))
-        save_data(df, database_filepath)
+        save_data(df, 'messages', database_filepath)
+        save_data(word_count_df, 'word_count', database_filepath)
+
         
         print('Cleaned data saved to database!')
     
