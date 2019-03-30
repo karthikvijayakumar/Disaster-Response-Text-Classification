@@ -3,11 +3,18 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """Load messages and categories data from the given file paths, process them and merge them
+    
+    Args:
+    messages_filepath: 
+    categories_filepath:
+
+    Returns:
+    df: pandas.DataFrame: dataframe containing the messages data combined with their category classifications    
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
-    categories_split = categories.categories.str.split(';', expand=True)
-    # select the first row of the categories dataframe
-    row = categories_split.iloc[0]
+    categories_split = categories.categories.str.split(';', expand=True)    
 
     # use this row to extract a list of new column names for categories.
     # one way is to apply a lambda function that takes everything 
@@ -33,13 +40,39 @@ def load_data(messages_filepath, categories_filepath):
     return df
 
 def clean_data(df):
+    """Removes duplicates from the dataset
+    Args:
+    df: pandas.DataFrame: Input data containing messages and their classifications into multiple categories
+
+    Returns:
+    df: pandas.DataFrame: Deduplicated input data    
+    """
     return df.drop_duplicates()
 
 def save_data(df, database_filename):
+    """Writes the dataframe into a sqlite database at the given location
+    
+    Args:
+    df: pandas.DataFrame: Input data containing messages and their classifications into multiple categories
+    database_filename: File location to create and store SQLite database
+
+    Returns:
+    None
+    
+    """
     engine = create_engine('sqlite:///' + database_filename, echo  = True)
     df.to_sql('messages', engine, index=False, if_exists='replace', chunksize=100 )
 
 def main():
+    """Main function for the file. This is entry point of execution
+    
+    Args:
+    None
+
+    Returns:
+    None
+
+    """
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]

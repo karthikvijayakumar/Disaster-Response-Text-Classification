@@ -52,6 +52,18 @@ with open("../models/classifier.pkl", 'rb') as f:
 @app.route('/')
 @app.route('/index')
 def index():
+    """Function to render the home page for the web app
+
+    This generate a HTML page that contains 2 visualizations about the training dataset. 
+    1. A histogram of the distribution of genres of messages
+    2. A word cloud of the top 100 words in the training dataset
+
+    Args:
+    None
+
+    Returns:
+    render_template: flask.render_template(html). HTML page to be shown to the user
+    """
 
     # create visuals    
     graphs = [
@@ -110,6 +122,16 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    """Route for predicting categories for a given piece of text
+
+    Args:
+    None
+
+    Returns:
+    render_template: flask.render_template(html). 
+        HTML page to be shown to the user containining classifications of the input message
+    """
+
     # save user input in query
     query = request.args.get('query', '') 
 
@@ -125,6 +147,7 @@ def go():
     )
 
 def main():
+    """Main function for the script. Entry point of standalone execution"""
     app.run(host='0.0.0.0', port=3001, debug=True)
 
 if __name__ == '__main__':
