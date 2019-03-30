@@ -19,7 +19,30 @@ app = Flask(__name__)
 db_path = os.path.abspath('../data/DisasterResponse.db')
 engine = create_engine('sqlite:///' + db_path)
 
+print('Loading data from database')
 df = pd.read_sql_table('messages', engine)
+print('Finished loading from database')
+
+# extract data needed for visuals    
+
+#Visual 1: Genre counts
+genre_counts = df.groupby('genre').count()['message']
+genre_names = list(genre_counts.index)
+
+#Visual 2: Word cloud of top 100 words
+all_messages_cleaned_tokens = df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
+all_messages_combined_words_cleaned = list( itertools.chain.from_iterable(all_messages_cleaned_tokens) )
+word_count_dict = dict( Counter(all_messages_combined_words_cleaned) )
+word_count_df = pd.DataFrame.from_dict(word_count_dict, orient = 'index', columns = ['count'])
+word_count_df['frequency'] = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned ))
+word_count_df = word_count_df.sort_values('frequency', ascending=False)
+word_count_df = word_count_df[:100]
+min_freq = word_count_df.frequency.min()
+max_freq = word_count_df.frequency.max()
+word_count_df = word_count_df.assign( score = word_count_df.frequency.apply(
+    lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
+))
+colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(100)]
 
 # load model
 with open("../models/classifier.pkl", 'rb') as f:
@@ -29,27 +52,6 @@ with open("../models/classifier.pkl", 'rb') as f:
 @app.route('/')
 @app.route('/index')
 def index():
-    
-    # extract data needed for visuals    
-
-    #Visual 1: Genre counts
-    genre_counts = df.groupby('genre').count()['message']
-    genre_names = list(genre_counts.index)
-
-    #Visual 2: Word cloud
-    df = df.assign(cleaned_tokens = df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) ))
-    all_messages_combined_words_cleaned = list( itertools.chain.from_iterable(df['cleaned_tokens']) )
-    word_count_dict = dict( Counter(all_messages_combined_words_cleaned) )
-    word_count_df = pd.DataFrame.from_dict(word_count_dict, orient = 'index', columns = ['count'])
-    word_count_df['frequency'] = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned ))
-    word_count_df = word_count_df.sort_values('frequency', ascending=False)
-    word_count_df = word_count_df[:100]
-    min_freq = word_count_df.frequency.min()
-    max_freq = word_count_df.frequency.max()
-    word_count_df = word_count_df.assign( score = word_count_df.frequency.apply(
-        lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
-    ))
-    colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(100)]   
 
     # create visuals    
     graphs = [
@@ -70,7 +72,8 @@ def index():
                     'title': "Genre"
                 }
             }
-        },
+        }
+        ,
         {
             'data' : [
                 Scatter(x=[random.random() for i in range(100)],
@@ -82,6 +85,7 @@ def index():
                             'color': colors})
             ],
             'layout' : {
+                'title': 'Word cloud of top 100 words',
                 'xaxis': {
                     'showgrid': False,
                     'showticklabels': False,
