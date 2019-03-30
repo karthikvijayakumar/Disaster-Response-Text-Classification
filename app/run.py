@@ -12,6 +12,7 @@ import os
 from collections import Counter
 import itertools
 import random
+import time
 
 app = Flask(__name__)
 
@@ -21,28 +22,34 @@ engine = create_engine('sqlite:///' + db_path)
 
 print('Loading data from database')
 df = pd.read_sql_table('messages', engine)
+word_count_df = pd.read_sql_table('word_count', engine)
 print('Finished loading from database')
 
 # extract data needed for visuals    
 
 #Visual 1: Genre counts
+print('Computing data for genre counts visualization')
+start = time.time()
 genre_counts = df.groupby('genre').count()['message']
 genre_names = list(genre_counts.index)
+end = time.time()
+print('Finished computing data for genre counts visualization in ' + str(end-start) + ' seconds')
 
 #Visual 2: Word cloud of top 100 words
-all_messages_cleaned_tokens = df['message'].apply(tokenize).apply(lambda x: list(filter(lambda x: not(x.isnumeric()), x)) )
-all_messages_combined_words_cleaned = list( itertools.chain.from_iterable(all_messages_cleaned_tokens) )
-word_count_dict = dict( Counter(all_messages_combined_words_cleaned) )
-word_count_df = pd.DataFrame.from_dict(word_count_dict, orient = 'index', columns = ['count'])
-word_count_df['frequency'] = word_count_df['count'].apply(lambda x: x/len( all_messages_combined_words_cleaned ))
-word_count_df = word_count_df.sort_values('frequency', ascending=False)
+print('Computing data for word cloud of top 100 words')
+print('Translating frequencies to scores')
+start = time.time()
 word_count_df = word_count_df[:100]
 min_freq = word_count_df.frequency.min()
 max_freq = word_count_df.frequency.max()
-word_count_df = word_count_df.assign( score = word_count_df.frequency.apply(
-    lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
-))
+word_count_df = word_count_df.assign( 
+    score = word_count_df.frequency.apply(
+        lambda x: 15 + ( ((x-min_freq)/(max_freq - min_freq))*20 )
+    )
+)
 colors = [plotly.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(100)]
+end = time.time()
+print('Finished computing data for word cloud of top 100 words in ' + str(end-start) + ' seconds')
 
 # load model
 with open("../models/classifier.pkl", 'rb') as f:
@@ -52,6 +59,18 @@ with open("../models/classifier.pkl", 'rb') as f:
 @app.route('/')
 @app.route('/index')
 def index():
+    """Function to render the home page for the web app
+
+    This generate a HTML page that contains 2 visualizations about the training dataset. 
+    1. A histogram of the distribution of genres of messages
+    2. A word cloud of the top 100 words in the training dataset
+
+    Args:
+    None
+
+    Returns:
+    render_template: flask.render_template(html). HTML page to be shown to the user
+    """
 
     # create visuals    
     graphs = [
@@ -79,9 +98,9 @@ def index():
                 Scatter(x=[random.random() for i in range(100)],
                     y=[random.random() for i in range(100)],
                     mode='text',
-                    text=word_count_df.index,
+                    text=word_count_df['word'],
                     marker={'opacity': 0.3},
-                    textfont={'size': word_count_df.score,
+                    textfont={'size': word_count_df['score'],
                             'color': colors})
             ],
             'layout' : {
@@ -110,6 +129,16 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    """Route for predicting categories for a given piece of text
+
+    Args:
+    None
+
+    Returns:
+    render_template: flask.render_template(html). 
+        HTML page to be shown to the user containining classifications of the input message
+    """
+
     # save user input in query
     query = request.args.get('query', '') 
 
@@ -125,6 +154,7 @@ def go():
     )
 
 def main():
+    """Main function for the script. Entry point of standalone execution"""
     app.run(host='0.0.0.0', port=3001, debug=True)
 
 if __name__ == '__main__':

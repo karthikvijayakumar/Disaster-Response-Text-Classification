@@ -23,7 +23,16 @@ import pickle
 from utils import tokenize
 
 def load_data(database_filepath):
-    # load data from database
+    """load data from sqlite database present at given path
+    
+    Args:
+    database_filepath: string. File path to sqlite database
+
+    Returns:
+    X: messages
+    Y: categories
+    category_names: list of categories
+    """
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql('Select * from messages;', con=engine)
     X = df['message']
@@ -32,6 +41,15 @@ def load_data(database_filepath):
     return [X,Y,category_names]
 
 def build_model():
+    """Pipeline for building the model
+    
+    Args:
+    None
+
+    Returns:
+    pipeline: sklearn.pipeline.Pipeline. Model object
+
+    """
     pipeline = Pipeline([
         ('countvectorizer', CountVectorizer(tokenizer= tokenize)),
         ('tfidftransformer', TfidfTransformer()),
@@ -40,6 +58,19 @@ def build_model():
     return pipeline
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """Evaluate model on given test dataset
+    
+    Args:
+    model: sklearn.pipeline.Pipeline
+    X_test: test data set features
+    Y_test: test data set labels
+    category_names: complete set of classification labels
+    
+    Returns:
+    None
+
+    This function computes the test performance of the given model on the given test data set and prints the classification report onto stdout
+    """
     y_test_preds = model.predict(X_test)
     y_test_preds = pd.DataFrame(y_test_preds, columns= Y_test.columns, index=  Y_test.index)
     clf_rpt_test = pd.DataFrame(columns = ['f1-score', 'precision','recall', 'support', 'column'])
@@ -60,10 +91,23 @@ def evaluate_model(model, X_test, Y_test, category_names):
     pd.reset_option( 'display.max_rows' )
 
 def save_model(model, model_filepath):
+    """Save the model as a pickle file into the given filepath
+    
+    Args:
+    model: sklearn.pipeline.Pipeline. Model object
+    model_filepath: string. File location for the pickle file
+    
+    Returns:
+    None
+    
+    """
+
     with open(model_filepath, 'wb') as f:
         pickle.dump(model, f)
 
 def main():
+    """Main function for the script. Entry point of execution"""
+
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))

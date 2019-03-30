@@ -4,7 +4,14 @@ from nltk.corpus import stopwords
 import re
 
 def tokenize(text):
-    # Note that the tweets are largely one sentence tweets, hence we dont need to split into multiple sentences
+    """Tokenize a a given message. We assume the messages contain only sentence and dont split the message into multiple sentences
+
+    Args:
+    text: string. Input message to tokenize
+
+    Returns:
+    tokens: List of tokens in the given text after removing stop words, and lemmatization
+    """    
     
     #Remove non alpha numeric characters
     text = re.sub('[^a-zA-Z0-9]', ' ', text.lower())
@@ -27,13 +34,3 @@ def tokenize(text):
     tokens = [lemmatizer.lemmatize(x, pos= 'v') for x in tokens]
     
     return tokens
-
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
-
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
-
-    return clean_tokens
