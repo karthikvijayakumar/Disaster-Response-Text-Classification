@@ -14,7 +14,7 @@ from nltk.corpus import stopwords
 
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
@@ -55,7 +55,16 @@ def build_model():
         ('tfidftransformer', TfidfTransformer()),
         ('clf', MultiOutputClassifier(RandomForestClassifier(), n_jobs = 1))    
     ])
-    return pipeline
+
+    paramGrid = {
+        'countvectorizer__max_df' :( 0.75, 1.0 ),
+        'countvectorizer__max_features' :( None, 10000 ),
+        'clf__estimator__n_estimators' : [50,100]
+    }
+
+    cv = GridSearchCV(pipeline, param_grid = paramGrid, cv = 3, n_jobs = 3)
+
+    return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
     """Evaluate model on given test dataset
