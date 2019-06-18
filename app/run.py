@@ -35,7 +35,14 @@ genre_names = list(genre_counts.index)
 end = time.time()
 print('Finished computing data for genre counts visualization in ' + str(end-start) + ' seconds')
 
-#Visual 2: Word cloud of top 100 words
+#Visual 2: Category counts
+start = time.time()
+category_columns = list(df.columns[4:])
+category_counts = df[category_columns].sum(axis =0).sort_values(ascending = False)
+end = time.time()
+print('Finished computing data for category counts visualization in ' + str(end-start) + ' seconds')
+
+#Visual 3: Word cloud of top 100 words
 print('Computing data for word cloud of top 100 words')
 print('Translating frequencies to scores')
 start = time.time()
@@ -89,6 +96,25 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        }
+        ,
+        {
+            'data': [
+                Bar(
+                    x=list(category_counts.index),
+                    y=category_counts.values
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
                 }
             }
         }
